@@ -9,7 +9,7 @@ import com.swoval.reflect.{ ChildFirstClassLoader, ClassLoaders, RequiredClassLo
 import sbt._
 import Keys._
 
-object QuickrunImpl {
+private[quickrun] object QuickrunImpl {
   lazy val runner = new TaskRunner(2)
   private val classLoaders =
     new ConcurrentHashMap[Set[URL], URLClassLoader].asScala
@@ -57,8 +57,7 @@ object QuickrunImpl {
       }
     }
 
-  def quickrun = Def.inputTask {
-    (compile in Compile).value
+  def quickrun: Def.Initialize[InputTask[Unit]] = Def.inputTask {
     val args = Def.spaceDelimited().parsed
     val main = (mainClass in Compile in run).value.getOrElse(
       throw new IllegalStateException(s"No main class found for ${projectID.value.name}"))

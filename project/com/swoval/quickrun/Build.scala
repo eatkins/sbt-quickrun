@@ -47,20 +47,43 @@ object Build {
       },
     )
 
-  val quickrunPlugin: Project = (project in file("."))
+  val benchmark: Project = project
     .enablePlugins(SbtPlugin)
     .settings(
-      commonSettings,
+      organization := "com.swoval",
       scalaVersion := scala210,
       version in ThisBuild := baseVersion,
       scriptedBufferLog := false,
-
       crossScalaVersions := scalaCrossVersions,
       sbtVersion in pluginCrossBuild := {
         if ((scalaVersion in crossVersion).value == scala210) "0.13.16" else "1.0.4"
       },
       skip in publish :=
-        !version.value.endsWith("-SNAPSHOT") || !sys.props.get("SonatypeSnapshot").fold(true)(_ == "true"),
+        !version.value
+          .endsWith("-SNAPSHOT") || !sys.props.get("SonatypeSnapshot").fold(true)(_ == "true"),
+      crossSbtVersions := Seq("1.1.1", "0.13.17"),
+      name := "sbt-swoval-benchmark",
+      description := "Benchmark repeated invocations of main method."
+    )
+
+  val quickrunPlugin: Project = (project in file("quickrun"))
+    .enablePlugins(SbtPlugin)
+    .settings(
+      commonSettings,
+      publishLocal := {
+        (benchmark / publishLocal).value
+        publishLocal.value
+      },
+      scalaVersion := scala210,
+      version in ThisBuild := baseVersion,
+      scriptedBufferLog := false,
+      crossScalaVersions := scalaCrossVersions,
+      sbtVersion in pluginCrossBuild := {
+        if ((scalaVersion in crossVersion).value == scala210) "0.13.16" else "1.0.4"
+      },
+      skip in publish :=
+        !version.value
+          .endsWith("-SNAPSHOT") || !sys.props.get("SonatypeSnapshot").fold(true)(_ == "true"),
       crossSbtVersions := Seq("1.1.1", "0.13.17"),
       name := projectName,
       description := "Minimize task start latency by caching loaded classes for external dependencies.",
@@ -68,4 +91,6 @@ object Build {
         swovalReflectCore
       )
     )
+
+  val quickrun: Project = (project in file(".")).aggregate(benchmark, quickrunPlugin)
 }
