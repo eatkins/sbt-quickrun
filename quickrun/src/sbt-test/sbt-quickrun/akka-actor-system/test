@@ -1,3 +1,5 @@
-> benchmark
-> quickrunTest output1
-> quickrunTest output2
+> run
+
+-> benchmark run 2 0.2
+
+> benchmark quickrun 10 0.2

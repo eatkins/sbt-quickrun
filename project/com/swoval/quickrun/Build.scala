@@ -1,10 +1,15 @@
 package com.swoval.quickrun
 
+import java.nio.file.Paths
+
 import sbt.ScriptedPlugin.autoImport.scriptedBufferLog
 import sbt.plugins.SbtPlugin
 import sbt._
 import sbt.Keys._
 import Dependencies._
+import sbt.internal.io.Source
+
+import scala.collection.JavaConverters._
 
 object Build {
   private val baseVersion: String = "0.1.0-SNAPSHOT"
@@ -56,7 +61,7 @@ object Build {
       scriptedBufferLog := false,
       crossScalaVersions := scalaCrossVersions,
       sbtVersion in pluginCrossBuild := {
-        if ((scalaVersion in crossVersion).value == scala210) "0.13.16" else "1.0.4"
+        if ((scalaVersion in crossVersion).value == scala210) "0.13.17" else "1.0.4"
       },
       skip in publish :=
         !version.value
@@ -89,6 +94,14 @@ object Build {
       description := "Minimize task start latency by caching loaded classes for external dependencies.",
       libraryDependencies ++= Seq(
         swovalReflectCore
+      ),
+      watchSources += Source(
+        baseDirectory.value / "src" / "sbt-test",
+        ("test" | "*.build.sbt" | "*.scala") -- new FileFilter {
+          override def accept(f: File): Boolean =
+            f.toPath.iterator.asScala.toSeq.contains(Paths.get("target"))
+        },
+        NothingFilter
       )
     )
 
