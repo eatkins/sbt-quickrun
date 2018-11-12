@@ -12,6 +12,7 @@ import sbt.internal.io.Source
 import scala.collection.JavaConverters._
 
 object Build {
+  val genTestResourceClasses: TaskKey[Unit] = taskKey[Unit]("Generate test resource classes")
   private val baseVersion: String = "0.1.0-SNAPSHOT"
   private val (scala210, scala212) = ("2.10.7", "2.12.7")
   private val scalaCrossVersions = Seq(scala210, scala212)
@@ -89,15 +90,18 @@ object Build {
       skip in publish :=
         !version.value
           .endsWith("-SNAPSHOT") || !sys.props.get("SonatypeSnapshot").fold(true)(_ == "true"),
-      crossSbtVersions := Seq("1.1.1", "0.13.17"),
+      crossSbtVersions := Seq("1.0.4", "0.13.17"),
       name := projectName,
       description := "Minimize task start latency by caching loaded classes for external dependencies.",
       libraryDependencies ++= Seq(
-        swovalReflectCore
+        swovalReflectCore,
+        utest
       ),
+      genTestResourceClasses := Plugins.genTestResourceClasses.value,
+      testFrameworks += new TestFramework("utest.runner.Framework"),
       watchSources += Source(
         baseDirectory.value / "src" / "sbt-test",
-        ("test" | "*.build.sbt" | "*.scala") -- new FileFilter {
+        ("test" | "*.sbt" | "*.scala") -- new FileFilter {
           override def accept(f: File): Boolean =
             f.toPath.iterator.asScala.toSeq.contains(Paths.get("target"))
         },
