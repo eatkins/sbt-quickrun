@@ -1,5 +1,7 @@
-> run
+> benchmark run 2 0.1
 
--> benchmark run 2 0.2
+#> run
 
-> benchmark quickrun 10 0.2
+#-> benchmark run 2 0.2
+
+#> benchmark quickrun 10 0.2

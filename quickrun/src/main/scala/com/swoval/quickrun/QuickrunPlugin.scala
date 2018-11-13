@@ -31,10 +31,24 @@ object QuickrunPlugin extends AutoPlugin {
         )
       }
     ))
+  val compileSettings: Seq[Def.Setting[_]] = Seq(
+    runner := {
+      val original = runner.value
+      original match {
+        case r: sbt.Run =>
+          val (scalaInstance, trapExit, tmpFile) = Reflection.runParams(r)
+          new Runner.Run(scalaInstance, trapExit, tmpFile)
+        case r => r
+      }
+    }
+  )
+  val combinedCompileSettings: Seq[Def.Setting[_]] = inConfig(Compile)(compileSettings) ++ inConfig(
+    Runtime)(compileSettings)
   val sharedSettings: Seq[Def.Setting[_]] = Seq(
     quickrun := QuickrunImpl.quickrun.evaluated
   )
   val allSettings: Seq[Def.Setting[_]] = inConfig(Compile)(sharedSettings) ++ inConfig(Test)(
-    sharedSettings) ++ testSettings
+    sharedSettings) ++ testSettings ++ combinedCompileSettings
   override lazy val projectSettings: Seq[Def.Setting[_]] = super.projectSettings ++ allSettings
+  //override lazy val globalSettings: Seq[Def.Setting[_]] = super.globalSettings ++ compileSettings
 }
