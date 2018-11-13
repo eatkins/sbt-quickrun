@@ -32,7 +32,7 @@ object QuickrunPlugin extends AutoPlugin {
       }
     ))
   val compileSettings: Seq[Def.Setting[_]] = Seq(
-    runner := {
+    runner in run := {
       val original = runner.value
       original match {
         case r: sbt.Run =>
@@ -44,11 +44,21 @@ object QuickrunPlugin extends AutoPlugin {
   )
   val combinedCompileSettings: Seq[Def.Setting[_]] = inConfig(Compile)(compileSettings) ++ inConfig(
     Runtime)(compileSettings)
+  private def transitiveJars(conf: Configuration): Def.Initialize[Task[Seq[File]]] = Def.taskDyn {
+    import sbt.Wrappers._
+    val selectDeps = ScopeFilter(inAggregates(ThisProject) || inDeps(ThisProject))
+    val allJars = (packageBin in conf).all(selectDeps)
+    Def.task { allJars.value }
+  }
   val sharedSettings: Seq[Def.Setting[_]] = Seq(
     quickrun := QuickrunImpl.quickrun.evaluated
   )
+  val jars: Seq[Def.Setting[_]] = inConfig(Compile)(
+    transitiveProjectJars := transitiveJars(Compile).value) ++
+    inConfig(Test)(
+      transitiveProjectJars := transitiveJars(Compile).value ++ transitiveJars(Test).value)
   val allSettings: Seq[Def.Setting[_]] = inConfig(Compile)(sharedSettings) ++ inConfig(Test)(
-    sharedSettings) ++ testSettings ++ combinedCompileSettings
+    sharedSettings) ++ testSettings ++ combinedCompileSettings ++ jars
   override lazy val projectSettings: Seq[Def.Setting[_]] = super.projectSettings ++ allSettings
   //override lazy val globalSettings: Seq[Def.Setting[_]] = super.globalSettings ++ compileSettings
 }
