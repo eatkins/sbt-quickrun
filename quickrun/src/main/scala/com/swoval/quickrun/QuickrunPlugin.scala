@@ -34,10 +34,11 @@ object QuickrunPlugin extends AutoPlugin {
   val compileSettings: Seq[Def.Setting[_]] = Seq(
     runner in run := {
       val original = runner.value
+      val transitiveJars = transitiveProjectJars.value
       original match {
         case r: sbt.Run =>
           val (scalaInstance, trapExit, tmpFile) = Reflection.runParams(r)
-          new Runner.Run(scalaInstance, trapExit, tmpFile)
+          new Runner.Run(scalaInstance, trapExit, tmpFile, classLoaderCache, transitiveJars)
         case r => r
       }
     }

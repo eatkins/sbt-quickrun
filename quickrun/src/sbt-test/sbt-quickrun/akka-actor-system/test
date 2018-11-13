@@ -1,6 +1,6 @@
 > show transitiveProjectJars
 
-> benchmark run 2 0.1
+> benchmark run 4 0.2
 
 #> run
 
